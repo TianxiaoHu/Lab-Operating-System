@@ -15,13 +15,16 @@
 #define NVRAM_BASELO	(MC_NVRAM_START + 7)	/* low byte; RTC off. 0x15 */
 #define NVRAM_BASEHI	(MC_NVRAM_START + 8)	/* high byte; RTC off. 0x16 */
 
-/* NVRAM bytes 9 & 10: extended memory size (between 1MB and 16MB) */
+/* NVRAM bytes 9 & 10: extended memory size */
 #define NVRAM_EXTLO	(MC_NVRAM_START + 9)	/* low byte; RTC off. 0x17 */
 #define NVRAM_EXTHI	(MC_NVRAM_START + 10)	/* high byte; RTC off. 0x18 */
 
-/* NVRAM bytes 38 and 39: extended memory size (between 16MB and 4G) */
-#define NVRAM_EXT16LO	(MC_NVRAM_START + 38)	/* low byte; RTC off. 0x34 */
-#define NVRAM_EXT16HI	(MC_NVRAM_START + 39)	/* high byte; RTC off. 0x35 */
+/* NVRAM bytes 34 and 35: extended memory POSTed size */
+#define NVRAM_PEXTLO	(MC_NVRAM_START + 34)	/* low byte; RTC off. 0x30 */
+#define NVRAM_PEXTHI	(MC_NVRAM_START + 35)	/* high byte; RTC off. 0x31 */
+
+/* NVRAM byte 36: current century.  (please increment in Dec99!) */
+#define NVRAM_CENTURY	(MC_NVRAM_START + 36)	/* RTC offset 0x32 */
 
 unsigned mc146818_read(unsigned reg);
 void mc146818_write(unsigned reg, unsigned datum);

@@ -26,6 +26,8 @@ static const char * const error_string[MAXERROR] =
 	[E_NO_MEM]	= "out of memory",
 	[E_NO_FREE_ENV]	= "out of environments",
 	[E_FAULT]	= "segmentation fault",
+	[E_IPC_NOT_RECV]= "env is not recving",
+	[E_EOF]		= "unexpected end of file",
 };
 
 /*
@@ -87,6 +89,8 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 	unsigned long long num;
 	int base, lflag, width, precision, altflag;
 	char padc;
+
+    int Color = 0;// EOF added
 
 	while (1) {
 		while ((ch = *(unsigned char *) fmt++) != '%') {
@@ -157,8 +161,31 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 
 		// character
 		case 'c':
-			putch(va_arg(ap, int), putdat);
+            /*
+             * EOF added
+             */
+            ch = va_arg(ap, int) + Color;
+			putch(ch, putdat);
+            Color = 0;
+
 			break;
+
+        case 'C':
+            switch(va_arg(ap, int))
+            {
+                case COLOR_RED:
+                    Color = COLOR_RED<<8;
+                    break;
+
+                case COLOR_GRN:
+                    Color = COLOR_GRN<<8;
+                    break;
+
+                default:
+                    Color = 0;
+            }
+
+            goto reswitch;
 
 		// error message
 		case 'e':
@@ -205,8 +232,14 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 
 		// (unsigned) octal
 		case 'o':
-			num = getuint(&ap, lflag);
-			base = 8;
+			// Replace this with your code.
+
+            /*
+                What I added. --by EOF
+             */
+
+            num = getuint(&ap, lflag);
+            base = 8;
 			goto number;
 
 		// pointer

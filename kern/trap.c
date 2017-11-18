@@ -90,7 +90,7 @@ trap_init(void)
         }
     }
 
-	// Per-CPU setup 
+	// Per-CPU setup
 	trap_init_percpu();
 }
 
@@ -120,11 +120,14 @@ trap_init_percpu(void)
 	// user space on that CPU.
 	//
 	// LAB 2: Your code here:
-
+	int cpu_id = cpunum();
+	thiscpu->cpu_ts.ts_esp0 = KSTACKTOP - cpu_id * (KSTKSIZE + KSTKGAP);
+	thiscpu->cpu_ts.ts_ss0 = GD_KD;
+	thiscpu->cpu_ts.ts_iomb = sizeof(struct Taskstate);
 
 	// Setup a TSS so that we get the right stack
-	// when we trap to the kernel. 
-	 
+	// when we trap to the kernel.
+
 	ts.ts_esp0 = KSTACKTOP;
 	ts.ts_ss0 = GD_KD;
 	ts.ts_iomb = sizeof(struct Taskstate);
@@ -216,14 +219,14 @@ trap_dispatch(struct Trapframe *tf)
                 return;
 
         case T_SYSCALL:
-                tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax, 
+                tf->tf_regs.reg_eax = syscall(tf->tf_regs.reg_eax,
                             tf->tf_regs.reg_edx,
                             tf->tf_regs.reg_ecx,
                             tf->tf_regs.reg_ebx,
                             tf->tf_regs.reg_edi,
                             tf->tf_regs.reg_esi);
                 return ;
-                
+
     }
 
     if(tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER)

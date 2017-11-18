@@ -26,7 +26,7 @@ static struct Env *env_free_list;	// Free environment list
 // Set up global descriptor table (GDT) with separate segments for
 // kernel mode and user mode.  Segments serve many purposes on the x86.
 // We don't use any of their memory-mapping capabilities, but we need
-// them to switch privilege levels. 
+// them to switch privilege levels.
 //
 // The kernel and user segments are identical except for the DPL.
 // To load the SS register, the CPL must equal the DPL.  Thus,
@@ -384,7 +384,7 @@ load_icode(struct Env *e, uint8_t * binary)
 
     struct Elf* elfhdr = (struct Elf *)binary;
     struct Proghdr *ph, *eph;
-    
+
     if(elfhdr->e_magic != ELF_MAGIC)
     {
         panic("elf header's magic is not correct\n");
@@ -592,5 +592,6 @@ env_run(struct Env *e)
     lcr3(PADDR(e->env_pgdir));
 
 // LAB 2: Your code here.
+    unlock_kernel();
     env_pop_tf(&(e->env_tf));
 }

@@ -202,13 +202,13 @@ mem_init(void)
 	// LAB 3: Your code here.
 
     boot_map_region(kern_pgdir,
-                UENVS, 
+                UENVS,
                 ROUNDUP((sizeof(struct Env) * NENV) , PGSIZE),
                 PADDR(envs),
                 (PTE_U | PTE_P));
 
     boot_map_region(kern_pgdir,
-                (uintptr_t)envs, 
+                (uintptr_t)envs,
                 ROUNDUP((sizeof(struct Env) * NENV) , PGSIZE),
                 PADDR(envs),
                 (PTE_W | PTE_P));
@@ -224,7 +224,7 @@ mem_init(void)
 	//       overwrite memory.  Known as a "guard page".
 	//     Permissions: kernel RW, user NONE
 	// Your code goes here:
-    
+
     boot_map_region(kern_pgdir,
                 (KSTACKTOP - KSTKSIZE),
                 KSTKSIZE,
@@ -298,7 +298,7 @@ mem_init_mp(void)
 	//
 	// LAB 2: Your code here:
 
-   
+
 
 }
 
@@ -344,7 +344,7 @@ page_init(void)
 
     for(i = 0; i<npages; i++)
     {
-		
+
         if(i == 0)
         {
             pages[0].pp_ref = 1;
@@ -708,9 +708,16 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Lab2 code here:
+	pa = ROUNDDOWN(pa, PGSIZE);
+	size = ROUNDUP(size, PGSIZE);
+	if (base + size > MMIOLIM || base + size < base)
+		panic("mmio_map_region:reservation overflows");
+	boot_map_region(kern_pgdir, base, size, pa, PTE_PCD | PTE_PWT | PTE_W);
+	uintptr_t ret = base;
+	base += size;
+	return (void*)ret;
 
-
-	panic("mmio_map_region not implemented");
+	// panic("mmio_map_region not implemented");
 }
 
 static uintptr_t user_mem_check_addr;
@@ -742,7 +749,7 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
     pte_t *pte = NULL;
     perm |= PTE_P;
 
-    for (user_mem_check_addr = (uintptr_t)va; 
+    for (user_mem_check_addr = (uintptr_t)va;
                 user_mem_check_addr < end_va;
                 user_mem_check_addr += PGSIZE )
     {
@@ -762,13 +769,13 @@ user_mem_check(struct Env *env, const void *va, size_t len, int perm)
         {
             goto err;
         }
-                
+
     }
 
 	return 0;
 err:
 
-    
+
     if (user_mem_check_addr == (uintptr_t) va)
     {
         user_mem_check_addr = (uintptr_t) va;
@@ -777,7 +784,7 @@ err:
     {
         user_mem_check_addr = *pte;
     }
-    
+
     return -E_FAULT;
 }
 

@@ -28,27 +28,7 @@ sched_yield(void)
 	// no runnable environments, simply drop through to the code
 	// below to halt the cpu.
 
-	// LAB 4: Your code here.
-
-    idle = thiscpu->cpu_env;
-    uint32_t start = (idle != NULL) ? ENVX( idle->env_id) : 0;
-    uint32_t i = start;
-    bool first = true;
-
-    for (; i != start || first; i = (i+1) % NENV, first = false)
-    {
-        if(envs[i].env_status == ENV_RUNNABLE)
-        {
-            env_run(&envs[i]);
-            return ;
-        }
-    }
-
-    if (idle && idle->env_status == ENV_RUNNING)
-    {
-        env_run(idle);
-        return ;
-    }
+	// LAB 3: Your code here.
 
 	// sched_halt never returns
 	sched_halt();

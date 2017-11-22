@@ -83,7 +83,7 @@ pgfault(struct UTrapframe *utf)
 	// Check registers in UTrapframe
 	during.regs = utf->utf_regs;
 	during.eip = utf->utf_eip;
-	during.eflags = utf->utf_eflags;
+	during.eflags = utf->utf_eflags & ~FL_RF;
 	during.esp = utf->utf_esp;
 	check_regs(&before, "before", &during, "during", "in UTrapframe");
 
@@ -97,7 +97,7 @@ umain(int argc, char **argv)
 {
 	set_pgfault_handler(pgfault);
 
-	__asm __volatile(
+	asm volatile(
 		// Light up eflags to catch more errors
 		"\tpushl %%eax\n"
 		"\tpushfl\n"

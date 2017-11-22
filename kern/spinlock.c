@@ -107,14 +107,10 @@ spin_unlock(struct spinlock *lk)
 	lk->cpu = 0;
 #endif
 
-	// The xchg serializes, so that reads before release are 
-	// not reordered after it.  The 1996 PentiumPro manual (Volume 3,
-	// 7.2) says reads can be carried out speculatively and in
-	// any order, which implies we need to serialize here.
-	// But the 2007 Intel 64 Architecture Memory Ordering White
-	// Paper says that Intel 64 and IA-32 will not move a load
-	// after a store. So lock->locked = 0 would work here.
-	// The xchg being asm volatile ensures gcc emits it after
-	// the above assignments (and after the critical section).
+	// The xchg instruction is atomic (i.e. uses the "lock" prefix) with
+	// respect to any other instruction which references the same memory.
+	// x86 CPUs will not reorder loads/stores across locked instructions
+	// (vol 3, 8.2.2). Because xchg() is implemented using asm volatile,
+	// gcc will not reorder C statements across the xchg.
 	xchg(&lk->locked, 0);
 }

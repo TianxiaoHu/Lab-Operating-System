@@ -55,15 +55,13 @@ int	sys_ipc_try_send(envid_t to_env, uint32_t value, void *pg, int perm);
 int	sys_ipc_recv(void *rcv_pg);
 
 // This must be inlined.  Exercise for reader: why?
-static __inline envid_t __attribute__((always_inline))
+static inline envid_t __attribute__((always_inline))
 sys_exofork(void)
 {
 	envid_t ret;
-	__asm __volatile("int %2"
-		: "=a" (ret)
-		: "a" (SYS_exofork),
-		  "i" (T_SYSCALL)
-	);
+	asm volatile("int %2"
+		     : "=a" (ret)
+		     : "a" (SYS_exofork), "i" (T_SYSCALL));
 	return ret;
 }
 

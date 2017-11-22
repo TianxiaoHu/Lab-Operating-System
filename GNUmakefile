@@ -49,9 +49,9 @@ endif
 
 # try to infer the correct QEMU
 ifndef QEMU
-QEMU := $(shell if which qemu > /dev/null; \
+QEMU := $(shell if which qemu >/dev/null 2>&1; \
 	then echo qemu; exit; \
-        elif which qemu-system-i386 > /dev/null; \
+        elif which qemu-system-i386 >/dev/null 2>&1; \
         then echo qemu-system-i386; exit; \
 	else \
 	qemu=/Applications/Q.app/Contents/MacOS/i386-softmmu.app/Contents/MacOS/i386-softmmu; \
@@ -85,6 +85,8 @@ PERL	:= perl
 # Only optimize to -O1 to discourage inlining, which complicates backtraces.
 CFLAGS := $(CFLAGS) $(DEFS) $(LABDEFS) -O1 -fno-builtin -I$(TOP) -MD
 CFLAGS += -fno-omit-frame-pointer
+CFLAGS += -std=gnu99
+CFLAGS += -static
 CFLAGS += -Wall -Wno-format -Wno-unused -Werror -gstabs -m32
 # -fno-tree-ch prevented gcc from sometimes reordering read_ebp() before
 # mon_backtrace()'s function prologue on gcc version: (Debian 4.7.2-5) 4.7.2
@@ -102,7 +104,7 @@ ULDFLAGS := -T user/user.ld
 GCC_LIB := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 # Lists that the */Makefrag makefile fragments will add to
-OBJDIRS := 
+OBJDIRS :=
 
 # Make sure that 'all' is the first target
 all:
@@ -141,7 +143,7 @@ include user/Makefrag
 
 CPUS ?= 1
 
-QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
+QEMUOPTS = -drive file=$(OBJDIR)/kern/kernel.img,index=0,media=disk,format=raw -serial mon:stdio -gdb tcp::$(GDBPORT)
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
 IMAGES = $(OBJDIR)/kern/kernel.img
 QEMUOPTS += -smp $(CPUS)
@@ -151,7 +153,7 @@ QEMUOPTS += $(QEMUEXTRA)
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 
 gdb:
-	gdb -x .gdbinit
+	gdb -n -x .gdbinit
 
 pre-qemu: .gdbinit
 
@@ -222,7 +224,7 @@ git-handin: handin-check
 		false; \
 	fi
 
-WEBSUB = https://ccutler.scripts.mit.edu/6.828/handin.py
+WEBSUB := https://6828.scripts.mit.edu/2016/handin.py
 
 handin: tarball-pref myapi.key
 	@SUF=$(LAB); \
@@ -255,13 +257,12 @@ handin-check:
 		test "$$r" = y; \
 	fi
 
-tarball: handin-check
-	git archive --format=tar HEAD | gzip > lab$(LAB)-handin.tar.gz
+UPSTREAM := $(shell git remote -v | grep "pdos.csail.mit.edu/6.828/2016/jos.git (fetch)" | awk '{split($$0,a," "); print a[1]}')
 
 tarball-pref: handin-check
 	@SUF=$(LAB); \
 	if test $(LAB) -eq 3 -o $(LAB) -eq 4; then \
-		read -p "Which part would you like to submit? [a, b, c (lab 4 only)]" p; \
+		read -p "Which part would you like to submit? [a, b, c (c for lab 4 only)]" p; \
 		if test "$$p" != a -a "$$p" != b; then \
 			if test ! $(LAB) -eq 4 -o ! "$$p" = c; then \
 				echo "Bad part \"$$p\""; \
@@ -273,10 +274,15 @@ tarball-pref: handin-check
 	else \
 		rm -f .suf; \
 	fi; \
-	git archive --prefix=lab$(LAB)/ --format=tar HEAD | gzip > lab$$SUF-handin.tar.gz
+	git archive --format=tar HEAD > lab$$SUF-handin.tar; \
+	git diff $(UPSTREAM)/lab$(LAB) > /tmp/lab$$SUF-diff.patch; \
+	tar -rf lab$$SUF-handin.tar /tmp/lab$$SUF-diff.patch; \
+	gzip -c lab$$SUF-handin.tar > lab$$SUF-handin.tar.gz; \
+	rm lab$$SUF-handin.tar; \
+	rm /tmp/lab$$SUF-diff.patch; \
 
 myapi.key:
-	@echo Get an API key for yourself by visiting $(WEBSUB)
+	@echo Get an API key for yourself by visiting $(WEBSUB)/
 	@read -p "Please enter your API key: " k; \
 	if test `echo -n "$$k" |wc -c` = 32 ; then \
 		TF=`mktemp -t tmp.XXXXXX`; \
@@ -293,8 +299,8 @@ myapi.key:
 		false; \
 	fi;
 
-handin-prep:
-	@./handin-prep
+#handin-prep:
+#	@./handin-prep
 
 # For test runs
 

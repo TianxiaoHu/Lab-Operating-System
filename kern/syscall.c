@@ -90,7 +90,16 @@ sys_exofork(void)
 	// will appear to return 0.
 
 	// LAB 3: Your code here.
-	panic("sys_exofork not implemented");
+    struct Env* e;
+    int r;
+    if ((r = env_alloc(&e, curenv->env_id)) < 0)
+        return -E_NO_FREE_ENV;
+    e->env_tf = curenv->env_tf;
+    e->env_status = ENV_NOT_RUNNABLE;
+    e->env_tf.tf_regs.reg_eax = 0;
+
+    return env->env_id;
+	// panic("sys_exofork not implemented");
 }
 
 // Set envid's env_status to status, which must be ENV_RUNNABLE
@@ -110,7 +119,16 @@ sys_env_set_status(envid_t envid, int status)
 	// envid's status.
 
 	// LAB 3: Your code here.
-	panic("sys_env_set_status not implemented");
+    struct Env* e;
+    int r;
+    if ((r = envid2env(envid, &e, 1)) < 0)
+        return r;
+    if (status != ENV_RUNNABLE && status != ENV_NOT_RUNNABLE)
+        return -E_INVAL;
+
+    e->env_status = status;
+    return 0;
+	// panic("sys_env_set_status not implemented");
 }
 
 // Set the page fault upcall for 'envid' by modifying the corresponding struct
@@ -126,7 +144,7 @@ sys_env_set_pgfault_upcall(envid_t envid, void *func)
 {
 	// LAB 4: Your code here.
 	//panic("sys_env_set_pgfault_upcall not implemented");
-	struct Env *e; 
+	struct Env *e;
 	int ret = envid2env(envid, &e, 1);
 	if (ret) return ret;
 	e->env_pgfault_upcall = func;
@@ -161,7 +179,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
 
 	// LAB 4: Your code here.
 	//panic("sys_page_alloc not implemented");
-	struct Env *e; 
+	struct Env *e;
 	int ret = envid2env(envid, &e, 1);
 	if (ret) return ret;
 
@@ -217,8 +235,8 @@ sys_page_map(envid_t srcenvid, void *srcva,
 
 	// -E_INVAL if srcva >= UTOP or srcva is not page-aligned,
 	//          or dstva >= UTOP or dstva is not page-aligned.
-	if (srcva>=(void*)UTOP || dstva>=(void*)UTOP || 
-		ROUNDDOWN(srcva,PGSIZE)!=srcva || ROUNDDOWN(dstva,PGSIZE)!=dstva) 
+	if (srcva>=(void*)UTOP || dstva>=(void*)UTOP ||
+		ROUNDDOWN(srcva,PGSIZE)!=srcva || ROUNDDOWN(dstva,PGSIZE)!=dstva)
 		return -E_INVAL;
 
 	// -E_INVAL is srcva is not mapped in srcenvid's address space.
@@ -322,7 +340,7 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
 	}
 	e->env_ipc_recving = 0;
 	e->env_ipc_from = curenv->env_id;
-	e->env_ipc_value = value; 
+	e->env_ipc_value = value;
 	e->env_status = ENV_RUNNABLE;
 	e->env_tf.tf_regs.reg_eax = 0;
 	return 0;
@@ -344,8 +362,8 @@ sys_ipc_recv(void *dstva)
 {
 	// LAB 4: Your code here.
 	//panic("sys_ipc_recv not implemented");
-	if (dstva < (void*)UTOP) 
-		if (dstva != ROUNDDOWN(dstva, PGSIZE)) 
+	if (dstva < (void*)UTOP)
+		if (dstva != ROUNDDOWN(dstva, PGSIZE))
 			return -E_INVAL;
 	curenv->env_ipc_recving = 1;
 	curenv->env_status = ENV_NOT_RUNNABLE;
@@ -366,7 +384,7 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
 
 	int ret = 0;
 	switch (syscallno) {
-		case SYS_cputs: 
+		case SYS_cputs:
 			sys_cputs((char*)a1, a2);
 			ret = 0;
 			break;

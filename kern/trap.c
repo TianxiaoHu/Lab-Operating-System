@@ -111,7 +111,7 @@ trap_init(void)
 	void th47();
 
 	void th48();
-		
+
 	SETGATE(idt[0], 0, GD_KT, th0, 0);
 	SETGATE(idt[1], 0, GD_KT, th1, 0);
 	SETGATE(idt[2], 0, GD_KT, th2, 0);
@@ -151,8 +151,8 @@ trap_init(void)
 	SETGATE(idt[IRQ_OFFSET+IRQ_TIMER+15], 0, GD_KT, th47, 0);
 
 	SETGATE(idt[48], 0, GD_KT, th48, 3);
-	
-	// Per-CPU setup 
+
+	// Per-CPU setup
 	trap_init_percpu();
 }
 
@@ -263,8 +263,8 @@ trap_dispatch(struct Trapframe *tf)
 		return;
 	}
 	if (tf->tf_trapno == T_SYSCALL) {
-		// LAB 1: Your code here. 
-		tf->tf_regs.reg_eax = 
+		// LAB 1: Your code here.
+		tf->tf_regs.reg_eax =
 			syscall(tf->tf_regs.reg_eax, tf->tf_regs.reg_edx, tf->tf_regs.reg_ecx,
 				tf->tf_regs.reg_ebx, tf->tf_regs.reg_edi, tf->tf_regs.reg_esi);
 		return;
@@ -283,7 +283,9 @@ trap_dispatch(struct Trapframe *tf)
 	// interrupt using lapic_eoi() before calling the scheduler!
 	// LAB 3: Your code here.
 	if (tf->tf_trapno == IRQ_OFFSET + IRQ_TIMER) {
-
+		lapic_eoi();
+		sched_yield();
+		return;
 	}
 
 	// Unexpected trap: The user process or the kernel has a bug.

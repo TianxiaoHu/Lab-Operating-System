@@ -25,7 +25,7 @@ pgfault(struct UTrapframe *utf)
 	//   (see <inc/memlayout.h>).
 
 	// LAB 4: Your code here.
-	if (!((err & FEC_WR) && (uvpd[PDX(addr)] & PTE_P) && 
+	if (!((err & FEC_WR) && (uvpd[PDX(addr)] & PTE_P) &&
 	      (uvpt[PGNUM(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_COW)))
 		panic("not copy-on-write");
 
@@ -98,8 +98,32 @@ envid_t
 fork(void)
 {
 	// LAB 3: Your code here.
-	panic("fork not implemented");
+	envid_t envid;
+    uintptr_t addr;
+    set_pgfault_handler(&pgfault);
+    envid = sys_exofork();
+    if(envid < 0)
+        panic("fork: sys_exofork failed");
+    if(envid == 0){
+        thisenv = &envs[ENVX(sys_getenvid())];
+        return 0;
+    }
+
+    for (addr = 0; addr < USTACKTOP; addr += PGSIZE) {
+        if ((uvpd[PDX(addr)] & PTE_P) && (uvpt[PGNUM(addr)] & PTE_P))
+            duppage(envid, PGNUM(addr));
+    }
+    if (sys_page_alloc(envid, (void *) (UXSTACKTOP - PGSIZE),
+                   	   PTE_P | PTE_U | PTE_W) < 0)
+        panic("fork: sys_page_alloc failed");
+    extern void _pgfault_upcall();
+    sys_env_set_pgfault_upcall(envid, _pgfault_upcall);
+    if (sys_env_set_status(envid, ENV_RUNNABLE) != 0)
+        panic("fork: sys_env_set_status");
+    return envid;
+	// panic("fork not implemented");
 }
+
 
 // Challenge!
 int

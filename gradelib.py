@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import sys, os, re, time, socket, select, subprocess, errno, shutil, traceback
+import sys, os, re, time, socket, select, subprocess, errno, shutil
 from subprocess import check_call, Popen
 from optparse import OptionParser
 
@@ -49,7 +49,7 @@ def test(points, title=None, parent=None):
             try:
                 fn()
             except AssertionError as e:
-                fail = "".join(traceback.format_exception_only(type(e), e))
+                fail = str(e)
 
             # Display and handle test result
             POSSIBLE += points

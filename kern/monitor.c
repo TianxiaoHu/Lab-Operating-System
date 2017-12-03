@@ -25,8 +25,9 @@ struct Command {
 static struct Command commands[] = {
 	{ "help", "Display this list of commands", mon_help },
 	{ "kerninfo", "Display information about the kernel", mon_kerninfo },
-	{ "backtrace", "Display stack trace information", mon_backtrace },
+	{ "backtrace", "Display the backtrace of stacks.", mon_backtrace}
 };
+#define NCOMMANDS (sizeof(commands)/sizeof(commands[0]))
 
 /***** Implementations of basic kernel monitor commands *****/
 
@@ -35,7 +36,7 @@ mon_help(int argc, char **argv, struct Trapframe *tf)
 {
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(commands); i++)
+	for (i = 0; i < NCOMMANDS; i++)
 		cprintf("%s - %s\n", commands[i].name, commands[i].desc);
 	return 0;
 }
@@ -56,25 +57,26 @@ mon_kerninfo(int argc, char **argv, struct Trapframe *tf)
 	return 0;
 }
 
-#define bt_arg(N) ((ebp + N + 1) < last_ebp ? ebp[N + 1] : 0)
-
 int
 mon_backtrace(int argc, char **argv, struct Trapframe *tf)
 {
-	uint32_t *ebp, *last_ebp;
-	struct Eipdebuginfo info;
-	ebp = (uint32_t *) read_ebp();
-
+	//The ebp value of the program, which calls the mon_backtrace
+	int regebp = read_ebp();
+	regebp = *((int *)regebp);
+	int *ebp = (int *)regebp;
+	
 	cprintf("Stack backtrace:\n");
-	while (ebp) {
-		last_ebp = (uint32_t *) ebp[0];
-		cprintf("ebp %08x eip %08x args %08x %08x %08x %08x %08x\n",
-			ebp, ebp[1], bt_arg(1), bt_arg(2), bt_arg(3), bt_arg(4), bt_arg(5));
-
-		debuginfo_eip(ebp[1], &info);
-		cprintf("\t%s:%d: %.*s+%d\n", info.eip_file, info.eip_line,
-			info.eip_fn_namelen, info.eip_fn_name, ebp[1] - info.eip_fn_addr);
-		ebp = last_ebp;
+	//If only we haven't pass the stack frame of i386_init
+	while((int)ebp != 0x0) {
+		cprintf("  ebp %08x", (int)ebp);
+		cprintf("  eip %08x", *(ebp+1));
+		cprintf("  args");
+		cprintf(" %08x", *(ebp+2));
+		cprintf(" %08x", *(ebp+3));
+		cprintf(" %08x", *(ebp+4));
+		cprintf(" %08x", *(ebp+5));
+		cprintf(" %08x\n", *(ebp+6));
+		ebp = (int *)(*ebp);
 	}
 	return 0;
 }
@@ -117,7 +119,7 @@ runcmd(char *buf, struct Trapframe *tf)
 	// Lookup and invoke the command
 	if (argc == 0)
 		return 0;
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+	for (i = 0; i < NCOMMANDS; i++) {
 		if (strcmp(argv[0], commands[i].name) == 0)
 			return commands[i].func(argc, argv, tf);
 	}
@@ -142,4 +144,5 @@ monitor(struct Trapframe *tf)
 			if (runcmd(buf, tf) < 0)
 				break;
 	}
+
 }

@@ -4,6 +4,7 @@
 #include <inc/memlayout.h>
 #include <inc/trap.h>
 
+#include <kern/picirq.h>
 
 
 ###################################################################
@@ -46,50 +47,45 @@
 /*
  * Lab 3: Your code here for generating entry points for the different traps.
  */
-TRAPHANDLER_NOEC(t_divide, T_DIVIDE)
-TRAPHANDLER_NOEC(t_debug, T_DEBUG)
-TRAPHANDLER_NOEC(t_nmi, T_NMI)
-TRAPHANDLER_NOEC(t_brkpt, T_BRKPT)
-TRAPHANDLER_NOEC(t_oflow, T_OFLOW)
-TRAPHANDLER_NOEC(t_bound, T_BOUND)
-TRAPHANDLER_NOEC(t_illop, T_ILLOP)
-TRAPHANDLER_NOEC(t_device, T_DEVICE)
-TRAPHANDLER(t_dblflt, T_DBLFLT)
-TRAPHANDLER(t_tss, T_TSS)
-TRAPHANDLER(t_segnp, T_SEGNP)
-TRAPHANDLER(t_stack, T_STACK)
-TRAPHANDLER(t_gpflt, T_GPFLT)
-TRAPHANDLER(t_pgflt, T_PGFLT)
-TRAPHANDLER_NOEC(t_fperr, T_FPERR)
-TRAPHANDLER(t_align, T_ALIGN)
-TRAPHANDLER_NOEC(t_mchk, T_MCHK)
-TRAPHANDLER_NOEC(t_simderr, T_SIMDERR)
+TRAPHANDLER_NOEC(divide_trap, T_DIVIDE);
+TRAPHANDLER_NOEC(debug_trap, T_DEBUG);
+TRAPHANDLER_NOEC(nmi_trap, T_NMI);
+TRAPHANDLER_NOEC(brkpt_trap, T_BRKPT);
+TRAPHANDLER_NOEC(oflow_trap, T_OFLOW);
+TRAPHANDLER_NOEC(bound_trap, T_BOUND);
+TRAPHANDLER_NOEC(illop_trap, T_ILLOP);
+TRAPHANDLER_NOEC(device_trap, T_DEVICE);
+TRAPHANDLER(dblflt_trap, T_DBLFLT);
+TRAPHANDLER(tss_trap, T_TSS);
+TRAPHANDLER(segnp_trap, T_SEGNP);
+TRAPHANDLER(stack_trap, T_STACK);
+TRAPHANDLER(gpflt_trap, T_GPFLT);
+TRAPHANDLER(pgflt_trap, T_PGFLT);
+TRAPHANDLER_NOEC(fperr_trap, T_FPERR);
+TRAPHANDLER_NOEC(align_trap, T_ALIGN);
+TRAPHANDLER_NOEC(mchk_trap, T_MCHK);
+TRAPHANDLER_NOEC(simderr_trap, T_SIMDERR);
+TRAPHANDLER_NOEC(syscall_trap, T_SYSCALL);
+TRAPHANDLER_NOEC(timer_irq, IRQ_OFFSET + IRQ_TIMER);
+TRAPHANDLER_NOEC(kbd_irq, IRQ_OFFSET + IRQ_KBD);
+TRAPHANDLER_NOEC(serial_irq, IRQ_OFFSET + IRQ_SERIAL);
 
-TRAPHANDLER_NOEC(t_syscall, T_SYSCALL)
 
 /*
  * Lab 3: Your code here for _alltraps
  */
+
 _alltraps:
-	pushl %ds
-	pushl %es
-	pushal 
-
-	movl $GD_KD, %eax
-	movw %ax, %ds
-	movw %ax, %es
-
-	push %esp
-	call trap	
-
-
-
-
-
-
-
-
-
-
-
-
+	pushl	%ds
+	pushl	%es
+	pushal
+	movl	$GD_KD, %eax
+	movw	%ax, %ds
+	movw	%ax, %es
+	pushl 	%esp
+	call trap
+	pop 	%esp
+	popal
+	popl 	%es
+	popl 	%ds
+	iret
